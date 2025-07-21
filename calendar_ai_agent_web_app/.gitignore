@@ -1,0 +1,14 @@
+# Python secrets
+.env
+token.json
+credentials.json
+
+# Node.js
+frontend/node_modules/
+frontend/.cache/
+
+# Python build
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
