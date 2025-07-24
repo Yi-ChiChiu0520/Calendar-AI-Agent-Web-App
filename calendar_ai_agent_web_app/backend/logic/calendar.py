@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import os
 from calendar_ai_agent_web_app.backend.utils.logger import logger
-from calendar_ai_agent_web_app.backend.schemas.models import EventDetails, EventUpdateDetails
+from calendar_ai_agent_web_app.backend.schemas.models import EventDetails, EventUpdateDetails, ListCalendarEventsFilters, ListedEvents, CalendarEvent
 from calendar_ai_agent_web_app.backend.constants import SCOPES
 import os.path
 from zoneinfo import ZoneInfo  # built-in in Python 3.9+
@@ -150,3 +150,91 @@ def update_calendar_event(event_details: EventUpdateDetails, emails: list[str]) 
     except HttpError as error:
         logger.error(f"An error occurred during event update: {error}")
         return ""
+
+def get_calendar_events(filters: ListCalendarEventsFilters) -> ListedEvents:
+    logger.info("Fetching events from Google Calendar")
+
+    creds = None
+    if os.path.exists("token.json"):
+        creds = Credentials.from_authorized_user_file("token.json")
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            CREDENTIALS_PATH = os.path.join(BASE_DIR, "credentials.json")
+            flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
+            creds = flow.run_local_server(port=0)
+        with open("token.json", "w") as token:
+            token.write(creds.to_json())
+
+    try:
+        service = build("calendar", "v3", credentials=creds)
+
+        # Default time window: today to 1 week later if not specified
+        start_time = filters.start_time or datetime.now().astimezone()
+        end_time = filters.end_time or (start_time + timedelta(days=7))
+
+        logger.info(f"Querying events from {start_time} to {end_time}")
+
+        events_result = service.events().list(
+            calendarId="primary",
+            timeMin=start_time.isoformat(),
+            timeMax=end_time.isoformat(),
+            singleEvents=True,
+            orderBy="startTime"
+        ).execute()
+
+        events = events_result.get("items", [])
+        logger.info(f"Found {len(events)} events")
+
+        matched = []
+        for event in events:
+            try:
+                summary = event.get("summary", "")
+                description = event.get("description", "")
+                start_str = event["start"].get("dateTime")
+                end_str = event["end"].get("dateTime")
+                attendees = [att.get("email") for att in event.get("attendees", [])]
+                location = event.get("location")
+
+                # Time-of-day filtering
+                hour = datetime.fromisoformat(start_str).hour if start_str else None
+                if filters.time_of_day:
+                    if filters.time_of_day == "morning" and not (5 <= hour < 12):
+                        continue
+                    if filters.time_of_day == "afternoon" and not (12 <= hour < 17):
+                        continue
+                    if filters.time_of_day == "evening" and not (17 <= hour < 22):
+                        continue
+
+                # Keyword filtering
+                full_text = f"{summary} {description}".lower()
+                if filters.keywords and not any(kw.lower() in full_text for kw in filters.keywords):
+                    continue
+
+                # Participant filtering
+                if filters.participants and not any(p in attendees for p in filters.participants):
+                    continue
+
+                matched.append(CalendarEvent(
+                    title=summary,
+                    description=description,
+                    start_time=datetime.fromisoformat(start_str),
+                    end_time=datetime.fromisoformat(end_str),
+                    participants=attendees,
+                    location=location
+                ))
+            except Exception as parse_error:
+                logger.warning(f"Error parsing event: {parse_error}")
+        print(matched)
+        return ListedEvents(
+            query_summary=filters.description,
+            matched_events=matched,
+            count=len(matched)
+        )
+
+    except HttpError as error:
+        logger.error(f"Error fetching events: {error}")
+        return ListedEvents(query_summary=filters.description, matched_events=[], count=0)
