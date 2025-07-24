@@ -1,5 +1,20 @@
 /*! tailwindcss v4.1.11 | MIT License | https://tailwindcss.com */
 @layer properties;
+.absolute {
+  position: absolute;
+}
+.relative {
+  position: relative;
+}
+.order-1 {
+  order: 1;
+}
+.order-2 {
+  order: 2;
+}
+.mx-auto {
+  margin-inline: auto;
+}
 .block {
   display: block;
 }
@@ -9,27 +24,88 @@
 .inline-block {
   display: inline-block;
 }
+.inline-flex {
+  display: inline-flex;
+}
+.h-\[500px\] {
+  height: 500px;
+}
+.h-screen {
+  height: 100vh;
+}
 .min-h-screen {
   min-height: 100vh;
 }
 .w-full {
   width: 100%;
 }
+.flex-1 {
+  flex: 1;
+}
+.flex-col {
+  flex-direction: column;
+}
+.items-center {
+  align-items: center;
+}
+.items-end {
+  align-items: flex-end;
+}
 .items-start {
   align-items: flex-start;
 }
+.justify-between {
+  justify-content: space-between;
+}
 .justify-center {
   justify-content: center;
+}
+.justify-end {
+  justify-content: flex-end;
+}
+.overflow-y-auto {
+  overflow-y: auto;
+}
+.rounded-full {
+  border-radius: calc(infinity * 1px);
+}
+.rounded-br-none {
+  border-bottom-right-radius: 0;
+}
+.rounded-bl-none {
+  border-bottom-left-radius: 0;
 }
 .border {
   border-style: var(--tw-border-style);
   border-width: 1px;
 }
+.border-2 {
+  border-style: var(--tw-border-style);
+  border-width: 2px;
+}
+.border-t {
+  border-top-style: var(--tw-border-style);
+  border-top-width: 1px;
+}
+.border-t-2 {
+  border-top-style: var(--tw-border-style);
+  border-top-width: 2px;
+}
+.object-cover {
+  object-fit: cover;
+}
 .text-center {
   text-align: center;
 }
+.leading-none {
+  --tw-leading: 1;
+  line-height: 1;
+}
 .whitespace-pre-line {
   white-space: pre-line;
+}
+.underline {
+  text-decoration-line: underline;
 }
 .transition {
   transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, visibility, content-visibility, overlay, pointer-events;
@@ -55,10 +131,19 @@
     outline-style: none;
   }
 }
+.disabled\:opacity-50 {
+  &:disabled {
+    opacity: 50%;
+  }
+}
 @property --tw-border-style {
   syntax: "*";
   inherits: false;
   initial-value: solid;
+}
+@property --tw-leading {
+  syntax: "*";
+  inherits: false;
 }
 @property --tw-shadow {
   syntax: "*";
@@ -129,6 +214,7 @@
   @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
     *, ::before, ::after, ::backdrop {
       --tw-border-style: solid;
+      --tw-leading: initial;
       --tw-shadow: 0 0 #0000;
       --tw-shadow-color: initial;
       --tw-shadow-alpha: 100%;
