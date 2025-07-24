@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import './tailwind.output.css'; // Tailwind output CSS
+import EmailConfirmationPrompt from './EmailConfirmationPrompt';
 
 const EventForm = () => {
     const [eventDescription, setEventDescription] = useState('');
     const [participants, setParticipants] = useState('');
     const [confirmation, setConfirmation] = useState(null);
+    const [draft, setDraft] = useState(null);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -14,10 +16,27 @@ const EventForm = () => {
                 user_input: eventDescription,
                 participants: participants.split(',').map(email => email.trim())
             });
-            setConfirmation(response.data);
+
+            const data = response.data;
+
+            if (data.confirmation_message && data.requires_confirmation) {
+                setDraft({
+                    requires_confirmation: true,
+                    subject: data.subject || "Meeting Confirmation",
+                    confirmation_message: data.confirmation_message,
+                    to_emails: participants.split(',').map(email => email.trim()),
+                    calendar_link: data.calendar_link
+                });
+                setConfirmation(null); // Clear normal confirmation if draft exists
+            } else {
+                setConfirmation(data);
+                setDraft(null); // Clear draft if no confirmation needed
+            }
+
         } catch (error) {
             console.error('Error processing the event', error);
             setConfirmation({ error: 'An error occurred while processing your request.' });
+            setDraft(null);
         }
     };
 
@@ -30,7 +49,7 @@ const EventForm = () => {
                     <p className="text-gray-500 mt-1">Schedule or reschedule your meetings with natural language</p>
                 </div>
 
-                {/* Form Card */}
+                {/* Form */}
                 <div className="bg-white rounded-xl shadow p-6">
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div>
@@ -59,7 +78,6 @@ const EventForm = () => {
                                 placeholder="email1@example.com, email2@example.com"
                                 value={participants}
                                 onChange={(e) => setParticipants(e.target.value)}
-                                required
                             />
                         </div>
 
@@ -72,7 +90,18 @@ const EventForm = () => {
                     </form>
                 </div>
 
-                {/* AI Response */}
+                {/* Chat-based confirmation */}
+                {draft && draft.requires_confirmation && (
+                    <EmailConfirmationPrompt
+                        draft={draft}
+                        onSendComplete={() => {
+                            alert('✅ Email sent!');
+                            setDraft(null);
+                        }}
+                    />
+                )}
+
+                {/* Normal AI Response */}
                 {confirmation && (
                     <div className="bg-white rounded-xl shadow p-6">
                         <h3 className="text-lg font-semibold text-gray-800 mb-2">🧠 AI Response</h3>
