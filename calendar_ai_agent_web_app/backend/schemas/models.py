@@ -63,12 +63,9 @@ class CalendarEvent(BaseModel):
 class ListedEvents(BaseModel):
     query_summary: str = Field(..., description="A summary of the user's original query or intent")
     matched_events: List[CalendarEvent] = Field(..., description="List of events that matched the query")
-    count: int = Field(..., description="Total number of events returned")
 
 class EventListConfirmation(BaseModel):
     """
     Schema for AI-generated natural language response summarizing a list of matched events.
     """
     message: str = Field(..., description="Natural language summary of the matched calendar events, formatted for user display.")
-
-
