@@ -32,10 +32,6 @@ def process_calendar_request(user_input: str, participants: list[str]) ->  Optio
     chat_history = get_chat_history(session_id)
     logger.info(f"LangGraph memory for session {session_id}:")
 
-    print("Previous messages:")
-    for msg in chat_history.messages:
-        print(f"[{msg.type}] {msg.content}")
-
     # Step 2: Extract event info
     initial_extraction = extract_event_info(enriched_input)
     if (
