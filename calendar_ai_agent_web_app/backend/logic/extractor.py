@@ -2,7 +2,7 @@ from datetime import datetime
 import json
 from calendar_ai_agent_web_app.backend.schemas.models import EventExtraction
 from calendar_ai_agent_web_app.backend.utils.logger import logger
-from calendar_ai_agent_web_app.backend.config import client, model
+from calendar_ai_agent_web_app.backend.config import client_llama, model_llama
 
 
 def extract_event_info(user_input: str) -> EventExtraction:
@@ -10,31 +10,40 @@ def extract_event_info(user_input: str) -> EventExtraction:
 
     date_context = f"Today is {datetime.now().strftime('%A, %B %d, %Y')}."
 
-    # Prompt with updated roles and JSON spec
-    messages = [
-        {
-            "role": "system",
-            "content": f"""
-                {date_context}
+    # Few-shot examples
+    few_shot_messages = [
+        {"role": "system", "content": f"""
+{date_context}
 
-                You are an assistant that classifies calendar-related user messages.
+You are an assistant that classifies calendar-related user messages.
 
-                Your job is to identify:
-                - Whether the user is creating a new event.
-                - Whether they are modifying an existing one (reschedule, rename, cancel).
-                - Whether they are asking to list or query calendar events.
-                - Generate a short cleaned-up description summarizing the user intent.
+Your task is to identify the user's intent and respond with only structured JSON. Classify whether the user is:
+1. Creating a new calendar event (e.g. "Schedule meeting with Alice").
+2. Modifying an existing calendar event (e.g. "Move call with Bob to 4pm").
+3. Listing calendar events, examples of listing calendar events include:
+- "What meetings do I have [today/tomorrow/next week]?"
+- "Show me all my calls with Alice."
+- "List all the events I have this afternoon."
 
-                Only return structured JSON with these fields:
-                - description: str
-                - is_calendar_event: bool (e.g. scheduling "a call with Alice")
-                - is_calendar_modify_event: bool (e.g. rescheduling or changing an existing event)
-                - is_list_events: bool (e.g. "what meetings do I have this week", or "list all meetings with Ethan")
-                - confidence_score: float (between 0.0 and 1.0)
+These are classified as: is_list_events=True
 
-                Be accurate and consistent. Output only a valid JSON object, nothing else.
-            """
-        },
+Return a JSON object with:
+- description: Cleaned-up short summary of intent (str)
+- is_calendar_event: bool
+- is_calendar_modify_event: bool
+- is_list_events: bool
+- confidence_score: float (0.0 to 1.0)
+
+Only output JSON. Do not explain.
+        """},
+        {"role": "user", "content": "Tell me all the meetings I have today"},
+        {"role": "assistant", "content": json.dumps({
+            "description": "List meetings for today",
+            "is_calendar_event": False,
+            "is_calendar_modify_event": False,
+            "is_list_events": True,
+            "confidence_score": 0.92
+        })},
         {"role": "user", "content": "Schedule a call with Alice tomorrow at 3pm."},
         {"role": "assistant", "content": json.dumps({
             "description": "Schedule call with Alice at 3pm tomorrow",
@@ -51,43 +60,24 @@ def extract_event_info(user_input: str) -> EventExtraction:
             "is_list_events": False,
             "confidence_score": 0.93
         })},
-        {"role": "user", "content": "What meetings do I have next week?"},
-        {"role": "assistant", "content": json.dumps({
-            "description": "List meetings for next week",
-            "is_calendar_event": False,
-            "is_calendar_modify_event": False,
-            "is_list_events": True,
-            "confidence_score": 0.92
-        })},
         {"role": "user", "content": user_input}
     ]
 
     try:
-        response = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=0,
-        )
+        response = client_llama.chat(model=model_llama, messages=few_shot_messages)
+        content = response['message']['content'].strip()
 
-        content = response.choices[0].message.content.strip()
-        parsed = json.loads(content)
+        logger.info(f"Raw response from LLaMA: {content}")
+
+        try:
+            parsed_json = json.loads(content)
+        except json.JSONDecodeError:
+            logger.error(f"Invalid JSON from LLaMA: {content}")
+            raise
+
+        parsed = EventExtraction(**parsed_json)
         logger.info(f"Parsed event extraction: {parsed}")
-
-        result = EventExtraction(**parsed)
-
-        # Heuristic fallback for missed modifications
-        if (
-                not result.is_calendar_modify_event
-                and not result.is_calendar_event
-                and not result.is_list_events
-                and "change" in user_input.lower()
-                and "to" in user_input.lower()
-        ):
-            result.is_calendar_modify_event = True
-            result.confidence_score = max(result.confidence_score, 0.75)
-            logger.warning("LLM missed modify intent; heuristic applied.")
-
-        return result
+        return parsed
 
     except Exception as e:
         logger.exception("Failed to extract event info from LLM response")

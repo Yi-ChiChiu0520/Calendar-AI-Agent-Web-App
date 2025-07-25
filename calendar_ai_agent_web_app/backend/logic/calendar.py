@@ -5,12 +5,13 @@ from calendar_ai_agent_web_app.backend.schemas.models import EventDetails, Event
 from calendar_ai_agent_web_app.backend.constants import SCOPES
 import os.path
 from zoneinfo import ZoneInfo  # built-in in Python 3.9+
-
+from typing import Optional
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from calendar_ai_agent_web_app.backend.config import client, model
 
 def add_calendar_event(event_details: EventDetails, emails: list[str]) -> str:
     logger.info("Adding event to Google Calendar")
@@ -38,7 +39,7 @@ def add_calendar_event(event_details: EventDetails, emails: list[str]) -> str:
         start_time = event_details.date
         duration = event_details.duration_minutes
 
-        start_dt = datetime.fromisoformat(start_time).replace(tzinfo=ZoneInfo("America/Chicago"))  # or your actual timezone
+        start_dt = datetime.fromisoformat(start_time).replace(tzinfo=ZoneInfo("America/Los_Angeles"))  # or your actual timezone
         end_dt = start_dt + timedelta(minutes=duration)
 
         event = {
@@ -48,12 +49,12 @@ def add_calendar_event(event_details: EventDetails, emails: list[str]) -> str:
             "colorId": 5,
             "start": {
                 "dateTime": start_dt.isoformat(),
-                "timeZone": "America/Chicago"
+                "timeZone": "America/Los_Angeles"
 
             },
             "end": {
                 "dateTime": end_dt.isoformat(),
-                "timeZone": "America/Chicago"
+                "timeZone": "America/Los_Angeles"
 
             },
             "attendees": [{"email": email} for email in emails],
@@ -131,11 +132,11 @@ def update_calendar_event(event_details: EventUpdateDetails, emails: list[str]) 
         event["description"] = event_details.description
         event["start"] = {
             "dateTime": new_start_dt.isoformat(),
-            "timeZone": "America/Chicago"
+            "timeZone": "America/Los_Angeles"
         }
         event["end"] = {
             "dateTime": new_end_dt.isoformat(),
-            "timeZone": "America/Chicago"
+            "timeZone": "America/Los_Angeles"
         }
         event["attendees"] = [{"email": email} for email in emails]
         event["reminders"] = {"useDefault": True}
@@ -188,53 +189,43 @@ def get_calendar_events(filters: ListCalendarEventsFilters) -> ListedEvents:
 
         events = events_result.get("items", [])
         logger.info(f"Found {len(events)} events")
+        print(events)
 
-        matched = []
-        for event in events:
-            try:
-                summary = event.get("summary", "")
-                description = event.get("description", "")
-                start_str = event["start"].get("dateTime")
-                end_str = event["end"].get("dateTime")
-                attendees = [att.get("email") for att in event.get("attendees", [])]
-                location = event.get("location")
+        matched = filter_events_with_llm(events, filters)
 
-                # Time-of-day filtering
-                hour = datetime.fromisoformat(start_str).hour if start_str else None
-                if filters.time_of_day:
-                    if filters.time_of_day == "morning" and not (5 <= hour < 12):
-                        continue
-                    if filters.time_of_day == "afternoon" and not (12 <= hour < 17):
-                        continue
-                    if filters.time_of_day == "evening" and not (17 <= hour < 22):
-                        continue
-
-                # Keyword filtering
-                full_text = f"{summary} {description}".lower()
-                if filters.keywords and not any(kw.lower() in full_text for kw in filters.keywords):
-                    continue
-
-                # Participant filtering
-                if filters.participants and not any(p in attendees for p in filters.participants):
-                    continue
-
-                matched.append(CalendarEvent(
-                    title=summary,
-                    description=description,
-                    start_time=datetime.fromisoformat(start_str),
-                    end_time=datetime.fromisoformat(end_str),
-                    participants=attendees,
-                    location=location
-                ))
-            except Exception as parse_error:
-                logger.warning(f"Error parsing event: {parse_error}")
         print(matched)
-        return ListedEvents(
-            query_summary=filters.description,
-            matched_events=matched,
-            count=len(matched)
-        )
+
+        return matched
 
     except HttpError as error:
         logger.error(f"Error fetching events: {error}")
-        return ListedEvents(query_summary=filters.description, matched_events=[], count=0)
+        return ListedEvents(query_summary=filters.description, matched_events=[])
+
+def filter_events_with_llm(events: list[dict], filters: ListCalendarEventsFilters) -> Optional[ListedEvents]:
+    logger.info("Filtering events using LLM")
+
+    try:
+        system_prompt = (
+            "You are a helpful assistant that filters calendar events based on a user's intent. "
+            "Return only the list of events that match the user's filter as a JSON list. "
+            "Use exact structure of the input events. No explanations."
+        )
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"User's filter: {filters.model_dump()}"},
+            {"role": "user", "content": f"Events to filter: {events}"},
+        ]
+
+        response = client.beta.chat.completions.parse(
+            model=model,
+            messages=messages,
+            response_format=ListedEvents,
+        )
+
+        parsed_events = response.choices[0].message.parsed
+        return parsed_events
+
+    except Exception as e:
+        logger.exception("LLM filtering failed")
+        return []

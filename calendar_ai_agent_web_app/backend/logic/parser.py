@@ -2,20 +2,22 @@ from datetime import datetime
 from calendar_ai_agent_web_app.backend.schemas.models import EventDetails, EventUpdateDetails, ListCalendarEventsFilters
 from calendar_ai_agent_web_app.backend.utils.logger import logger
 from calendar_ai_agent_web_app.backend.config import client, model
-
+from zoneinfo import ZoneInfo
 
 def parse_calendar_event_details(description: str) -> EventDetails:
     logger.info("Starting calendar event parsing")
 
-    date_context = f"Today is {datetime.now().strftime('%A, %B %d, %Y')}."
+    now = datetime.now(ZoneInfo("America/Los_Angeles"))
+    date_context = f"Today is {now.strftime('%A, %B %d, %Y')}."
 
     system_prompt = (
         f"{date_context} Your task is to extract detailed information about a new calendar event.\n\n"
         "- Interpret relative time references (e.g., 'next Monday', 'this Friday') accurately.\n"
-        "- Assume that:\n"
+        "- Assume:\n"
         "  • 'this week' means from today up to this Saturday.\n"
         "  • 'next' refers to the week **starting from this upcoming Sunday**.\n"
-        "- All times must be in ISO 8601 format with timezone.\n"
+        "- ⏰ All time references (e.g., '3pm–4pm') are in the **America/Los_Angeles** time zone unless otherwise stated.\n"
+        "- All times must be returned in ISO 8601 format **with timezone** (America/Los_Angeles).\n"
         "- Include fields: name, description, location (if available), date/time, duration in minutes, participants.\n"
         "- Return output as a strict JSON object matching the EventDetails schema."
     )
@@ -34,14 +36,14 @@ def parse_calendar_event_details(description: str) -> EventDetails:
 def parse_calendar_modify_details(description: str) -> EventUpdateDetails:
     logger.info("Starting calendar modify parsing")
 
-    today = datetime.now()
+    now = datetime.now(ZoneInfo("America/Los_Angeles"))
     date_context = (
-        f"Today is {today.strftime('%A, %B %d, %Y')}.\n"
+        f"Today is {now.strftime('%A, %B %d, %Y')}.\n"
         "The calendar week runs from Sunday to Saturday.\n"
         "- 'This [weekday]' refers to the upcoming [weekday] within this week (before the coming Saturday).\n"
         "- 'Next [weekday]' refers to the [weekday] in the following week, starting the next Sunday.\n"
-        "For example, if today is Tuesday and someone says 'next Friday', it means the Friday *after* this week.\n"
-        "Always use ISO 8601 format with timezone for all datetime fields.\n"
+        "- ⏰ All time references like '8am–9am' are in **America/Los_Angeles** timezone by default.\n"
+        "- Always use ISO 8601 format with timezone for all datetime fields.\n"
     )
 
     system_prompt = (
@@ -90,7 +92,8 @@ def parse_calendar_modify_details(description: str) -> EventUpdateDetails:
 def parse_list_calendar_events(description: str) -> ListCalendarEventsFilters:
     logger.info("Starting list calendar events parsing")
 
-    data_context = f"Today is {datetime.now().strftime('%A, %B, %d, %Y')}"
+    now = datetime.now(ZoneInfo("America/Los_Angeles"))
+    date_context = f"Today is {now.strftime('%A, %B, %d, %Y')}"
 
     completion = client.beta.chat.completions.parse(
         model = model,
@@ -98,15 +101,18 @@ def parse_list_calendar_events(description: str) -> ListCalendarEventsFilters:
             {
                 "role": "system",
                 "content": (
-                    f"{data_context} Your task is to extract all relevant filters for listing calendar events."
+                     f"{date_context}\n"
+                    "Your task is to extract all relevant filters for listing calendar events.\n"
                     "The user is trying to *view* existing events, not create or modify them.\n\n"
+                    "**Important:** In the examples below, assume today's date is July 25, 2025 (for illustration). "
+                    "When parsing real input, always use the actual current date via `datetime.now()` in Los Angeles time.\n\n"
                     "Extract:\n"
                     "- A cleaned-up description summarizing the request.\n"
-                    "- Opitonal fields if available: \n"
-                    "   - 'start_time' and 'end_time': ISO 8601 datetime filters for the date/time range.\n"
-                    "   - 'participants': emails or *names* the user wants to filter by.\n"
-                    "   - 'time_of_day': 'morning', 'afternoon', or 'evening' if mentioned.\n"
-                    "   - 'keywords': relevant words to filter titles/descriptions (e.g., 'project', 'demo').\n"
+                    "- Optional fields if available:\n"
+                    "   - 'start_time' and 'end_time': ISO 8601 datetime filters for the date/time range (in Los Angeles time).\n"
+                    "   - 'participants': emails or names to filter by.\n"
+                    "   - 'time_of_day': 'morning', 'afternoon', or 'evening'.\n"
+                    "   - 'keywords': relevant keywords like 'meeting', 'demo'.\n"
                     "Return only structured JSON matching the target model. Do not explain or include extra text."
                 )
             },
@@ -119,8 +125,42 @@ def parse_list_calendar_events(description: str) -> ListCalendarEventsFilters:
                 "content": (
                     '{'
                     '"description": "List all meetings with Ethan next week in the morning", '
-                    '"start_time": "2025-07-29T00:00:00-04:00", '
-                    '"end_time": "2025-08-02T23:59:59-04:00", '
+                    '"start_time": "2025-07-29T00:00:00-07:00", '
+                    '"end_time": "2025-08-02T23:59:59-07:00", '
+                    '"participants": ["Ethan"], '
+                    '"time_of_day": "morning", '
+                    '"keywords": ["meeting"]'
+                    '}'
+                )
+            },
+            {
+                "role": "user",
+                "content": "Show me all meetings with chiuetha@usc.edu today"
+            },
+            {
+                "role": "assistant",
+                "content": (
+                    '{'
+                    '"description": "List all meetings with Ethan today", '
+                    '"start_time": "2025-07-25T00:00:00-07:00", '
+                    '"end_time": "2025-07-25T23:59:59-07:00", '
+                    '"participants": ["chiuetha@usc.edu"], '
+                    '"keywords": ["meeting"]'
+                    '}'
+                    # (Assumes today is 2025-07-25 for this example. Use datetime.now() in production.)
+                )
+            },
+            {
+                "role": "user",
+                "content": "Tell me all meetings I had yesterday"
+            },
+            {
+                "role": "assistant",
+                "content": (
+                    '{'
+                    '"description": "List all meetings from yesterday", '
+                    '"start_time": "2025-07-24T00:00:00-07:00", '
+                    '"end_time": "2025-07-24T23:59:59-07:00", '
                     '"participants": ["Ethan"], '
                     '"time_of_day": "morning", '
                     '"keywords": ["meeting"]'
