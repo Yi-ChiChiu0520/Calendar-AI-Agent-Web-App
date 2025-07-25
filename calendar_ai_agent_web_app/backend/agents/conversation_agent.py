@@ -42,9 +42,6 @@ def call_model(state: MessagesState, config: RunnableConfig) -> dict:
 
     # Store current messages + model reply
     chat_history.add_messages(state["messages"] + [ai_message])
-    print("Adding messages to chat history:")
-    for msg in state["messages"] + [ai_message]:
-        print(f" - [{msg.type}] {msg.content}")
 
     return {"messages": ai_message}
 
