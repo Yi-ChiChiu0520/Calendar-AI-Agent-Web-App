@@ -110,7 +110,7 @@ const EventForm = () => {
                                 <p className="text-red-500 font-medium">{confirmation.error}</p>
                             ) : (
                                 <>
-                                    <p>{confirmation.confirmation_message}</p>
+                                    <p>{confirmation.confirmation_message || confirmation.message}</p>
                                     {confirmation.calendar_link && (
                                         <a
                                             href={confirmation.calendar_link}
