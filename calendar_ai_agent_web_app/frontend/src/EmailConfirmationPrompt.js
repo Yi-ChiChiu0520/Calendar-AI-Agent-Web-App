@@ -1,36 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import './tailwind.output.css'; // Tailwind output CSS
 
 const EmailConfirmationPrompt = ({ draft, onSendComplete }) => {
-  if (!draft) return null; // Prevent rendering if draft is undefined
+  if (!draft) return null;
 
   const [subject, setSubject] = useState(draft.subject || '');
-  const [message, setMessage] = useState(draft.confirmation_message || ''); // ✅ not confirmation_message
-  const [isEditing, setIsEditing] = useState(false);
+  const [message, setMessage] = useState(draft.confirmation_message || '');
+  const [isEditing, setIsEditing] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
+  const textareaRef = useRef(null);
+
+  const autoResizeTextarea = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  };
+
+  const handleInputChange = (e) => {
+    setMessage(e.target.value);
+    autoResizeTextarea();
+  };
+
+  useEffect(() => {
+    autoResizeTextarea();
+  }, [isEditing, message]);
 
   const handleSend = async () => {
     setSending(true);
     setError(null);
-
     try {
       console.log({
-          confirmation_message: message,
-          calendar_link: draft.calendar_link,
-          to_emails: draft.to_emails,
-          subject: subject,
-          requires_confirmation: true
+        confirmation_message: message,
+        calendar_link: draft.calendar_link,
+        to_emails: draft.to_emails,
+        subject: subject,
+        requires_confirmation: true
       });
+
       await axios.post('http://localhost:8000/send_confirmation_email', {
-          confirmation_message: message,
-          calendar_link: draft.calendar_link, // optional, can be omitted
-          to_emails: draft.to_emails,
-          subject: subject,
-          requires_confirmation: true
+        confirmation_message: message,
+        calendar_link: draft.calendar_link,
+        to_emails: draft.to_emails,
+        subject: subject,
+        requires_confirmation: true
       });
-      onSendComplete(); // optional callback to notify parent
+
+      onSendComplete();
     } catch (err) {
       setError('Failed to send email. Please try again.');
     } finally {
@@ -53,9 +72,10 @@ const EmailConfirmationPrompt = ({ draft, onSendComplete }) => {
 
       <label className="block text-sm font-medium mb-1">Message</label>
       <textarea
+        ref={textareaRef}
         value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        className="w-full border px-3 py-2 rounded mb-4 h-40"
+        onChange={handleInputChange}
+        className="w-full border px-3 py-2 rounded mb-4 resize-none overflow-hidden"
         disabled={!isEditing}
       />
 
