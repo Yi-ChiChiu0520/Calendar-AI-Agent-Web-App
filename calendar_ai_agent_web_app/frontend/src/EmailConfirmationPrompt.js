@@ -13,10 +13,10 @@ const EmailConfirmationPrompt = ({ draft, onSendComplete }) => {
   const textareaRef = useRef(null);
 
   const autoResizeTextarea = () => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = `${textarea.scrollHeight}px`;
+    const text_area = textareaRef.current;
+    if (text_area) {
+      text_area.style.height = 'auto';
+      text_area.style.height = `${textarea.scrollHeight}px`;
     }
   };
 
