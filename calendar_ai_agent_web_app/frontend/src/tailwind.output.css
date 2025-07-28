@@ -42,6 +42,12 @@
 .flex-1 {
   flex: 1;
 }
+.resize {
+  resize: both;
+}
+.resize-none {
+  resize: none;
+}
 .flex-col {
   flex-direction: column;
 }
@@ -62,6 +68,9 @@
 }
 .justify-end {
   justify-content: flex-end;
+}
+.overflow-hidden {
+  overflow: hidden;
 }
 .overflow-y-auto {
   overflow-y: auto;
