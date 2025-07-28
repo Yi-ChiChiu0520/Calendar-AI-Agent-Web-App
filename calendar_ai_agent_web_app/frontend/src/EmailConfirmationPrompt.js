@@ -7,18 +7,19 @@ const EmailConfirmationPrompt = ({ draft, onSendComplete }) => {
 
   const [subject, setSubject] = useState(draft.subject || '');
   const [message, setMessage] = useState(draft.confirmation_message || '');
-  const [isEditing, setIsEditing] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
   const textareaRef = useRef(null);
 
   const autoResizeTextarea = () => {
-    const text_area = textareaRef.current;
-    if (text_area) {
-      text_area.style.height = 'auto';
-      text_area.style.height = `${textarea.scrollHeight}px`;
+  const text_area = textareaRef.current;
+  if (text_area) {
+    text_area.style.height = 'auto';
+    text_area.style.height = `${text_area.scrollHeight}px`; // ✅ use `text_area` here
     }
   };
+
 
   const handleInputChange = (e) => {
     setMessage(e.target.value);
@@ -29,33 +30,44 @@ const EmailConfirmationPrompt = ({ draft, onSendComplete }) => {
     autoResizeTextarea();
   }, [isEditing, message]);
 
-  const handleSend = async () => {
-    setSending(true);
-    setError(null);
-    try {
-      console.log({
-        confirmation_message: message,
-        calendar_link: draft.calendar_link,
-        to_emails: draft.to_emails,
-        subject: subject,
-        requires_confirmation: true
-      });
-
-      await axios.post('http://localhost:8000/send_confirmation_email', {
-        confirmation_message: message,
-        calendar_link: draft.calendar_link,
-        to_emails: draft.to_emails,
-        subject: subject,
-        requires_confirmation: true
-      });
-
-      onSendComplete();
-    } catch (err) {
-      setError('Failed to send email. Please try again.');
-    } finally {
-      setSending(false);
+  useEffect(() => {
+  if (draft) {
+    setSubject(draft.subject || '');
+    setMessage(draft.confirmation_message || '');
     }
-  };
+  }, [draft]);
+
+  const handleSend = async () => {
+      setSending(true);
+      setError(null);
+
+      // Check if calendar link is already present in the message
+      const linkAlreadyIncluded = message.includes(draft.calendar_link) ||
+                                  message.includes("calendar/event?eid=");
+
+      const messageWithLink = linkAlreadyIncluded
+        ? message
+        : `${message}
+
+    You can view further details and access the event using the following calendar link: [Join the Event](${draft.calendar_link})`;
+
+      try {
+        await axios.post('http://localhost:8000/send_confirmation_email', {
+          confirmation_message: messageWithLink,
+          calendar_link: draft.calendar_link,
+          to_emails: draft.to_emails,
+          subject: subject,
+          requires_confirmation: true
+        });
+
+        onSendComplete();
+      } catch (err) {
+        setError('Failed to send email. Please try again.');
+      } finally {
+        setSending(false);
+      }
+    };
+
 
   return (
     <div className="max-w-2xl mx-auto mt-6 p-6 border rounded-lg shadow">
