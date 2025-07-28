@@ -1,10 +1,9 @@
 from typing import Optional, Union
 from langchain_core.messages import HumanMessage
-from calendar_ai_agent_web_app.backend.logic.extractor import extract_event_info
+from calendar_ai_agent_web_app.backend.logic.extractor import extract_event_info, extract_list_event_info
 from calendar_ai_agent_web_app.backend.logic.parser import parse_calendar_event_details, parse_calendar_modify_details, parse_list_calendar_events
 from calendar_ai_agent_web_app.backend.logic.confirmation import generate_confirmation, generate_modify_confirmation, generate_matched_calendar_events_message
 from calendar_ai_agent_web_app.backend.logic.calendar import add_calendar_event, update_calendar_event, get_calendar_events
-from calendar_ai_agent_web_app.backend.mail_utils.sender import send_email
 from calendar_ai_agent_web_app.backend.schemas.models import EventConfirmation, EventConfirmationDraft, EventListConfirmation
 from calendar_ai_agent_web_app.backend.utils.logger import logger
 from calendar_ai_agent_web_app.backend.agents.conversation_agent import (
@@ -39,8 +38,16 @@ def process_calendar_request(user_input: str, participants: list[str]) ->  Optio
             and not initial_extraction.is_calendar_modify_event
             and not initial_extraction.is_list_events
     ) or initial_extraction.confidence_score < 0.7:
-        logger.warning(f"Invalid calendar input. Confidence: {initial_extraction.confidence_score}")
-        return None
+
+        # Fallback to list event-specific extraction
+        initial_extraction = extract_list_event_info(enriched_input)
+
+        if(not initial_extraction.is_calendar_event
+            and not initial_extraction.is_calendar_modify_event
+            and not initial_extraction.is_list_events
+        ) or initial_extraction.confidence_score < 0.7:
+            logger.warning(f"Invalid calendar input. Confidence: {initial_extraction.confidence_score}")
+            return None
 
     if initial_extraction.is_calendar_modify_event:
         logger.info("This is a calendar modify event.")
