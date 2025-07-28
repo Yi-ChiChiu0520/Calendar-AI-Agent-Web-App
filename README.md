@@ -42,11 +42,11 @@ python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
-#### ✏️  Create a .env file with:
+#### ✏️  Create a .env file with (see .env.example):
 ```bash
 OPENAI_API_KEY=your_api_key
-EMAIL_USER=your_email
-EMAIL_PASSWORD=your_password
+SENDER_EMAIL=your_email
+SENDER_PASSWORD=your_password
 GOOGLE_CLIENT_SECRET=your_credentials.json
 ```
 
