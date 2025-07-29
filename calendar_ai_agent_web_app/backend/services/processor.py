@@ -4,7 +4,7 @@ from calendar_ai_agent_web_app.backend.logic.extractor import extract_event_info
 from calendar_ai_agent_web_app.backend.logic.parser import parse_calendar_event_details, parse_calendar_modify_details, parse_list_calendar_events
 from calendar_ai_agent_web_app.backend.logic.confirmation import generate_confirmation, generate_modify_confirmation, generate_matched_calendar_events_message
 from calendar_ai_agent_web_app.backend.logic.calendar import add_calendar_event, update_calendar_event, get_calendar_events
-from calendar_ai_agent_web_app.backend.schemas.models import EventConfirmation, EventConfirmationDraft, EventListConfirmation
+from calendar_ai_agent_web_app.backend.schemas.models import  EventConfirmationDraft, EventListConfirmation
 from calendar_ai_agent_web_app.backend.utils.logger import logger
 from calendar_ai_agent_web_app.backend.agents.conversation_agent import (
     get_or_create_session_id, graph, get_chat_history
