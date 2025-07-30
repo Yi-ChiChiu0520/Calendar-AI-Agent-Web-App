@@ -6,6 +6,7 @@ credentials.json
 # Node.js
 frontend/node_modules/
 frontend/.cache/
+frontend/src/tailwind.output.css
 
 # Python build
 __pycache__/
