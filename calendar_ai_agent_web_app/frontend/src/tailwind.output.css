@@ -76,7 +76,7 @@
   overflow-y: auto;
 }
 .rounded-full {
-  border-radius: calc(infinity * 1px);
+  border-radius: 9999px;
 }
 .rounded-br-none {
   border-bottom-right-radius: 0;
