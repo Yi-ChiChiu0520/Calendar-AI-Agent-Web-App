@@ -52,7 +52,7 @@ const EmailConfirmationPrompt = ({ draft, onSendComplete }) => {
     You can view further details and access the event using the following calendar link: [Join the Event](${draft.calendar_link})`;
 
       try {
-        await axios.post('http://localhost:8000/send_confirmation_email', {
+        await axios.post('http://18.221.147.151:8000/send_confirmation_email', {
           confirmation_message: messageWithLink,
           calendar_link: draft.calendar_link,
           to_emails: draft.to_emails,
