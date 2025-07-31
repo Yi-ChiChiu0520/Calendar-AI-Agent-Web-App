@@ -12,7 +12,10 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://calendar-ai-agent-web-k5vm7gvux-ethan-chius-projects-a1e59d9f.vercel.app",
+        "https://calendar-agent-app.com",  # if frontend hosted here too
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
