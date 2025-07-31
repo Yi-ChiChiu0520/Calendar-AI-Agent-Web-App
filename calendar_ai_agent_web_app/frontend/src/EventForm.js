@@ -12,7 +12,7 @@ const EventForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('http://18.221.147.151:8000/process', {
+            const response = await axios.post('/api/proxy', {
                 user_input: eventDescription,
                 participants: participants.split(',').map(email => email.trim())
             });
