@@ -26,10 +26,10 @@ def add_calendar_event(event_details: EventDetails, emails: list[str]) -> str:
             creds.refresh(Request())
         else:
             BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            CREDENTIALS_PATH = os.path.join(BASE_DIR, "credentials.json")
+            CREDENTIALS_PATH = os.path.join(BASE_DIR, "credentials2.json")
 
             flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
-            creds = flow.run_local_server(port=0)
+            creds = flow.run_console()
         with open("token.json", "w") as token:
             token.write(creds.to_json())
 
@@ -86,9 +86,9 @@ def update_calendar_event(event_details: EventUpdateDetails, emails: list[str]) 
             creds.refresh(Request())
         else:
             BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            CREDENTIALS_PATH = os.path.join(BASE_DIR, "credentials.json")
+            CREDENTIALS_PATH = os.path.join(BASE_DIR, "credentials2.json")
             flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
-            creds = flow.run_local_server(port=0)
+            creds = flow.run_console()
         with open("token.json", "w") as token:
             token.write(creds.to_json())
 
@@ -164,9 +164,9 @@ def get_calendar_events(filters: ListCalendarEventsFilters) -> ListedEvents:
             creds.refresh(Request())
         else:
             BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            CREDENTIALS_PATH = os.path.join(BASE_DIR, "credentials.json")
+            CREDENTIALS_PATH = os.path.join(BASE_DIR, "credentials2.json")
             flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
-            creds = flow.run_local_server(port=0)
+            creds = flow.run_console()
         with open("token.json", "w") as token:
             token.write(creds.to_json())
 
