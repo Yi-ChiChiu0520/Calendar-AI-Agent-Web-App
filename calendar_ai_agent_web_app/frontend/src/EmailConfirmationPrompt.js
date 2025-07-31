@@ -51,7 +51,7 @@ const EmailConfirmationPrompt = ({ draft, onSendComplete }) => {
     You can view further details and access the event using the following calendar link: [Join the Event](${draft.calendar_link})`;
 
       try {
-        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/send_confirmation_email`, {
+        await axios.post("https://calendar-agent-app.com/send_confirmation_email", {
           confirmation_message: messageWithLink,
           calendar_link: draft.calendar_link,
           to_emails: draft.to_emails,
