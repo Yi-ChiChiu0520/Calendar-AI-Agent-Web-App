@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import './tailwind.output.css'; // Tailwind output CSS
 
 const EmailConfirmationPrompt = ({ draft, onSendComplete }) => {
   if (!draft) return null;

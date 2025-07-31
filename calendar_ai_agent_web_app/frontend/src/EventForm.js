@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import './tailwind.output.css'; // Tailwind output CSS
 import EmailConfirmationPrompt from './EmailConfirmationPrompt';
 
 const EventForm = () => {
@@ -12,7 +11,7 @@ const EventForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('https://calendar-agent-app.com/process', {
+            const response = await axios.post('http://localhost:8000/process', {
               user_input: eventDescription,
               participants: participants.split(',').map(email => email.trim())
             });
