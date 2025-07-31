@@ -12,9 +12,9 @@ const EventForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('/api/proxy', {
-                user_input: eventDescription,
-                participants: participants.split(',').map(email => email.trim())
+            const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/process`, {
+              user_input: eventDescription,
+              participants: participants.split(',').map(email => email.trim())
             });
 
             const data = response.data;
