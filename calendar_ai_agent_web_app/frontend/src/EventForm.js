@@ -12,7 +12,7 @@ const EventForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('http://ec2-18-221-147-151.us-east-2.compute.amazonaws.com:8000/process', {
+            const response = await axios.post('https://calendar-agent-app.com/process', {
               user_input: eventDescription,
               participants: participants.split(',').map(email => email.trim())
             });
