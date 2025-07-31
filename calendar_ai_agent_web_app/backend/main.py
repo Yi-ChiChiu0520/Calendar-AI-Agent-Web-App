@@ -22,7 +22,7 @@ class CalendarRequest(BaseModel):
     user_input: str
     participants: Optional[List[str]] = []
 
-@app.post("http://18.221.147.151:8000/process")
+@app.post("/process")
 def process_event(request: CalendarRequest):
     confirmation = process_calendar_request(
         user_input=request.user_input,
@@ -34,7 +34,7 @@ def process_event(request: CalendarRequest):
     return confirmation.model_dump()
 
 
-@app.post("http://18.221.147.151:8000/send_confirmation_email")
+@app.post("/send_confirmation_email")
 async def send_confirmation_email(email: EventConfirmationDraft, request: Request):
     body = await request.json()
     print("Received body:", body)
