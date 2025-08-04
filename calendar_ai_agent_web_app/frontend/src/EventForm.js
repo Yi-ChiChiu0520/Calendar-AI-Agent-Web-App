@@ -7,13 +7,15 @@ const EventForm = () => {
     const [participants, setParticipants] = useState('');
     const [confirmation, setConfirmation] = useState(null);
     const [draft, setDraft] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
         try {
             const response = await axios.post('https://calendar-agent-app.com/process', {
-              user_input: eventDescription,
-              participants: participants.split(',').map(email => email.trim())
+                user_input: eventDescription,
+                participants: participants.split(',').map(email => email.trim())
             });
 
             const data = response.data;
@@ -26,16 +28,17 @@ const EventForm = () => {
                     to_emails: participants.split(',').map(email => email.trim()),
                     calendar_link: data.calendar_link
                 });
-                setConfirmation(null); // Clear normal confirmation if draft exists
+                setConfirmation(null);
             } else {
                 setConfirmation(data);
-                setDraft(null); // Clear draft if no confirmation needed
+                setDraft(null);
             }
-
         } catch (error) {
             console.error('Error processing the event', error);
             setConfirmation({ error: 'An error occurred while processing your request.' });
             setDraft(null);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -63,6 +66,7 @@ const EventForm = () => {
                                 value={eventDescription}
                                 onChange={(e) => setEventDescription(e.target.value)}
                                 required
+                                disabled={loading}
                             />
                         </div>
 
@@ -77,14 +81,20 @@ const EventForm = () => {
                                 placeholder="email1@example.com, email2@example.com"
                                 value={participants}
                                 onChange={(e) => setParticipants(e.target.value)}
+                                disabled={loading}
                             />
                         </div>
 
                         <button
                             type="submit"
-                            className="w-full bg-blue-600 text-black py-3 rounded-md font-semibold hover:bg-blue-700 transition"
+                            disabled={loading}
+                            className={`w-full py-3 rounded-md font-semibold transition ${
+                                loading
+                                    ? 'bg-gray-400 text-white cursor-not-allowed'
+                                    : 'bg-blue-600 text-black hover:bg-blue-700'
+                            }`}
                         >
-                            Submit
+                            {loading ? 'Submitting...' : 'Submit'}
                         </button>
                     </form>
                 </div>
@@ -125,6 +135,9 @@ const EventForm = () => {
                         </div>
                     </div>
                 )}
+
+                {Optional: Loading indicator}
+                {{loading && <p className="text-center text-sm text-gray-500">🔄 Processing your request...</p>}}
             </div>
         </div>
     );
