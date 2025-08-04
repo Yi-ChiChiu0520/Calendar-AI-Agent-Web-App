@@ -17,7 +17,7 @@ def extract_event_info(user_input: str) -> EventExtraction:
 
 You are an assistant that classifies calendar-related user messages. 
 
-DO NOT: rephrase as "guide user to..." or "guide to..." — treat all user inputs as direct commands or requests
+DO NOT: rephrase as "guide user on..." or "guide to..." — treat all user inputs as direct commands or requests
 
 Your task is to classify whether the user is directly trying to schedule, modify, or list a calendar event. Do not rephrase as "guide user to..." — treat all user inputs as direct commands or requests. Respond only with structured JSON.
 1. Creating a new calendar event (e.g. "Schedule meeting with Alice").
@@ -85,34 +85,55 @@ Only output JSON. Do not explain.
         )
 
         logger.info(f"Using model: {model_calendar}")
-
         parsed = response.choices[0].message.parsed
 
-        # 🔧 Normalize description
-        desc_lower = parsed.description.lower()
+        desc = parsed.description.strip()
+        desc_lower = desc.lower()
 
-        if desc_lower.startswith("guide user to schedule"):
-            parsed.description = parsed.description.replace("Guide user to schedule", "Schedule", 1).replace(
-                "guide user to schedule", "Schedule", 1).strip()
-            parsed.is_calendar_event = True
-            parsed.is_calendar_modify_event = False
-            parsed.is_list_events = False
+        # 🚨 Reject or patch hallucinated "guide" outputs
+        if "guide" in desc_lower:
+            logger.warning(f"LLM hallucinated instructional phrasing: '{desc}'")
 
-        elif desc_lower.startswith("guide user to modify") or desc_lower.startswith("guide user to reschedule"):
-            parsed.description = parsed.description.replace("Guide user to", "", 1).replace("guide user to", "",
-                                                                                            1).strip()
-            parsed.is_calendar_event = False
-            parsed.is_calendar_modify_event = True
-            parsed.is_list_events = False
+            # Optional: patch if we recognize the intent
+            if "guide to schedule" in desc_lower or "guide user to schedule" in desc_lower:
+                parsed.description = desc.replace("Guide to ", "").replace("Guide user to ", "").replace("guide to ",
+                                                                                                         "").replace(
+                    "guide user to ", "").strip()
+                parsed.is_calendar_event = True
+                parsed.is_calendar_modify_event = False
+                parsed.is_list_events = False
+                logger.warning("Auto-corrected classification to is_calendar_event=True")
 
-        elif desc_lower.startswith("guide user to list") or desc_lower.startswith("guide user to show"):
-            parsed.description = parsed.description.replace("Guide user to", "", 1).replace("guide user to", "",
-                                                                                            1).strip()
-            parsed.is_calendar_event = False
-            parsed.is_calendar_modify_event = False
-            parsed.is_list_events = True
+            elif "guide to modify" in desc_lower or "guide user to modify" in desc_lower:
+                parsed.description = desc.replace("Guide to ", "").replace("Guide user to ", "").replace("guide to ",
+                                                                                                         "").replace(
+                    "guide user to ", "").strip()
+                parsed.is_calendar_event = False
+                parsed.is_calendar_modify_event = True
+                parsed.is_list_events = False
+                logger.warning("Auto-corrected classification to is_calendar_modify_event=True")
 
-        logger.info(f"Parsed event extraction: {parsed}")
+            elif "guide to list" in desc_lower or "guide user to list" in desc_lower:
+                parsed.description = desc.replace("Guide to ", "").replace("Guide user to ", "").replace("guide to ",
+                                                                                                         "").replace(
+                    "guide user to ", "").strip()
+                parsed.is_calendar_event = False
+                parsed.is_calendar_modify_event = False
+                parsed.is_list_events = True
+                logger.warning("Auto-corrected classification to is_list_events=True")
+
+            else:
+                # Unknown or unsafe guide usage: reject result
+                logger.error("Unrecognized 'guide' phrasing — rejecting output")
+                return EventExtraction(
+                    description=user_input,
+                    is_calendar_event=False,
+                    is_calendar_modify_event=False,
+                    is_list_events=False,
+                    confidence_score=0.0
+                )
+
+        logger.info(f"Validated event extraction: {parsed}")
         return parsed
 
     except Exception as e:
