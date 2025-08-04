@@ -111,6 +111,7 @@ const EventForm = () => {
                 )}
 
                 {/* Normal AI Response */}
+                {/* Normal AI Response */}
                 {confirmation && (
                     <div className="bg-white rounded-xl shadow p-6">
                         <h3 className="text-lg font-semibold text-gray-800 mb-2">🧠 AI Response</h3>
@@ -135,9 +136,10 @@ const EventForm = () => {
                         </div>
                     </div>
                 )}
-
-                {Optional: Loading indicator}
-                {{loading && <p className="text-center text-sm text-gray-500">🔄 Processing your request...</p>}}
+                {/* Optional: Loading indicator */}
+                {loading && (
+                    <p className="text-center text-sm text-gray-500">🔄 Processing your request...</p>
+                )}
             </div>
         </div>
     );
