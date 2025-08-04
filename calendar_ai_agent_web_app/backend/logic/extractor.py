@@ -14,15 +14,19 @@ def extract_event_info(user_input: str) -> EventExtraction:
             "role": "system",
             "content": f"""{date_context}
 
-    You are a calendar assistant. Your task is to classify the user's message and return only structured JSON with the following fields:
+    You are a classification-only calendar assistant.
 
-    - description: Cleaned-up summary of intent (str)
-    - is_calendar_event: bool
-    - is_calendar_modify_event: bool
-    - is_list_events: bool
-    - confidence_score: float (0.0 to 1.0)
-
-    Respond with JSON only. Do not explain.
+    You do NOT give suggestions, instructions, or guidance. Do NOT rephrase the user's input as if you are guiding them, helping them, or giving instructions like 'Guide user to...', 'Instruct user...', or 'Help them...'. The user input should always be treated as a direct command or intent.
+    
+    Your ONLY job is to classify the message and return structured JSON with the following fields:
+    
+    - description: Cleaned-up summary of the user's direct intent (str). NEVER include phrases like 'guide to...', 'help user...', or 'assist with...'.
+    - is_calendar_event: true if the user is trying to create a new event.
+    - is_calendar_modify_event: true if the user wants to modify an existing event.
+    - is_list_events: true if the user is asking to list or query their calendar.
+    - confidence_score: float (0.0 to 1.0) representing how confident you are in this classification.
+    
+    Respond with JSON only. Do not explain. Do not include any instructional or assistive language in the output.
     """
         },
         {
