@@ -94,36 +94,35 @@ Only output JSON. Do not explain.
         if "guide" in desc_lower:
             logger.warning(f"LLM hallucinated instructional phrasing: '{desc}'")
 
-            # Optional: patch if we recognize the intent
-            if "guide to schedule" in desc_lower or "guide user to schedule" in desc_lower:
-                parsed.description = desc.replace("Guide to ", "").replace("Guide user to ", "").replace("guide to ",
-                                                                                                         "").replace(
-                    "guide user to ", "").strip()
+            # Normalize common hallucinations
+            guide_variants = [
+                "guide user to", "guide to", "guide user on", "guide on",
+                "Guide user to", "Guide to", "Guide user on", "Guide on"
+            ]
+            for variant in guide_variants:
+                if variant in parsed.description:
+                    parsed.description = parsed.description.replace(variant, "").strip()
+
+            # Try to recover intent by keyword
+            if "schedule" in parsed.description.lower():
                 parsed.is_calendar_event = True
                 parsed.is_calendar_modify_event = False
                 parsed.is_list_events = False
                 logger.warning("Auto-corrected classification to is_calendar_event=True")
 
-            elif "guide to modify" in desc_lower or "guide user to modify" in desc_lower:
-                parsed.description = desc.replace("Guide to ", "").replace("Guide user to ", "").replace("guide to ",
-                                                                                                         "").replace(
-                    "guide user to ", "").strip()
+            elif "reschedule" in parsed.description.lower() or "modify" in parsed.description.lower():
                 parsed.is_calendar_event = False
                 parsed.is_calendar_modify_event = True
                 parsed.is_list_events = False
                 logger.warning("Auto-corrected classification to is_calendar_modify_event=True")
 
-            elif "guide to list" in desc_lower or "guide user to list" in desc_lower:
-                parsed.description = desc.replace("Guide to ", "").replace("Guide user to ", "").replace("guide to ",
-                                                                                                         "").replace(
-                    "guide user to ", "").strip()
+            elif "list" in parsed.description.lower() or "show" in parsed.description.lower():
                 parsed.is_calendar_event = False
                 parsed.is_calendar_modify_event = False
                 parsed.is_list_events = True
                 logger.warning("Auto-corrected classification to is_list_events=True")
 
             else:
-                # Unknown or unsafe guide usage: reject result
                 logger.error("Unrecognized 'guide' phrasing — rejecting output")
                 return EventExtraction(
                     description=user_input,
