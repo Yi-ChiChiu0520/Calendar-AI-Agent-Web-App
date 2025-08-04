@@ -82,7 +82,7 @@ Only output JSON. Do not explain.
             response_format=EventExtraction
         )
 
-        logger.info(f"Using model: {model_list_event}")
+        logger.info(f"Using model: {model_calendar}")
 
         parsed = response.choices[0].message.parsed
         logger.info(f"Parsed event extraction: {parsed}")
