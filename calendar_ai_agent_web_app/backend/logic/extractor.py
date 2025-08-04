@@ -24,6 +24,10 @@ def extract_event_info(user_input: str) -> EventExtraction:
 
     Respond with JSON only. Do not explain.
     """
+        },
+        {
+            "role": "user",
+            "content": user_input
         }
     ]
 
