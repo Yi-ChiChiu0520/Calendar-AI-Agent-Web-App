@@ -101,19 +101,16 @@ def parse_list_calendar_events(description: str) -> ListCalendarEventsFilters:
             {
                 "role": "system",
                 "content": (
-                     f"{date_context}\n"
-                    "Your task is to extract all relevant filters for listing calendar events.\n"
-                    "The user is trying to *view* existing events, not create or modify them.\n\n"
-                    "**Important:** In the examples below, assume today's date is July 25, 2025 (for illustration). "
-                    "When parsing real input, always use the actual current date via `datetime.now()` in Los Angeles time.\n\n"
-                    "Extract:\n"
-                    "- A cleaned-up description summarizing the request.\n"
-                    "- Optional fields if available:\n"
-                    "   - 'start_time' and 'end_time': ISO 8601 datetime filters for the date/time range (in Los Angeles time).\n"
-                    "   - 'participants': emails or names to filter by.\n"
+                    f"{date_context}\n"
+                    "You are a calendar assistant that extracts filters for listing existing events — NOT creating or editing them.\n\n"
+                    "Your goal is to extract:\n"
+                    "- A cleaned-up description summarizing the user's request.\n"
+                    "- Optional structured fields:\n"
+                    "   - 'start_time' and 'end_time': ISO 8601 datetimes in America/Los_Angeles time.\n"
+                    "   - 'participants': names or emails mentioned.\n"
                     "   - 'time_of_day': 'morning', 'afternoon', or 'evening'.\n"
-                    "   - 'keywords': relevant keywords like 'meeting', 'demo'.\n"
-                    "Return only structured JSON matching the target model. Do not explain or include extra text."
+                    "   - 'keywords': event-related words (e.g., 'meeting', 'call', etc.)\n\n"
+                    "Use today's actual date from context. Only return structured JSON. Do not explain."
                 )
             },
             {
@@ -147,7 +144,6 @@ def parse_list_calendar_events(description: str) -> ListCalendarEventsFilters:
                     '"participants": ["chiuetha@usc.edu"], '
                     '"keywords": ["meeting"]'
                     '}'
-                    # (Assumes today is 2025-07-25 for this example. Use datetime.now() in production.)
                 )
             },
             {
