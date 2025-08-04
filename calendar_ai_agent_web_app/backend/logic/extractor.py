@@ -25,7 +25,7 @@ Your task is to classify whether the user is directly trying to schedule, modify
 3. Listing calendar events (e.g. "What meetings do I have tomorrow?", "Show my calls with Ethan", "Tell me all meetings I have tomorrow.").
 
 Return a JSON object with:
-- description: Cleaned-up short summary of intent (str)
+- description: Cleaned-up short summary of intent WITHOUT rephrasing as "guide user on..." or "guide to..." (str)
 - is_calendar_event: bool
 - is_calendar_modify_event: bool
 - is_list_events: bool
@@ -33,48 +33,7 @@ Return a JSON object with:
 
 Only output JSON. Do not explain.
             """
-        },
-        {"role": "user", "content": "Tell me all the meetings I have next Tuesday morning with Ethan"},
-        {"role": "assistant", "content": EventExtraction(
-            description="List meetings for next Tuesday morning with Ethan",
-            is_calendar_event=False,
-            is_calendar_modify_event=False,
-            is_list_events=True,
-            confidence_score=0.92
-        ).model_dump_json()},
-        {"role": "user", "content": "Schedule a call with Alice tomorrow at 3pm."},
-        {"role": "assistant", "content": EventExtraction(
-            description="Schedule call with Alice at 3pm tomorrow",
-            is_calendar_event=True,
-            is_calendar_modify_event=False,
-            is_list_events=False,
-            confidence_score=0.95
-        ).model_dump_json()},
-        {"role": "user", "content": "Change the meeting with Alice to 4pm."},
-        {"role": "assistant", "content": EventExtraction(
-            description="Reschedule meeting with Alice to 4pm",
-            is_calendar_event=False,
-            is_calendar_modify_event=True,
-            is_list_events=False,
-            confidence_score=0.93
-        ).model_dump_json()},
-        {"role": "user", "content": "What meetings do I have next week?"},
-        {"role": "assistant", "content": EventExtraction(
-            description="List meetings for next week",
-            is_calendar_event=False,
-            is_calendar_modify_event=False,
-            is_list_events=True,
-            confidence_score=0.92
-        ).model_dump_json()},
-        {"role": "user", "content": "Tell me all the meetings I have today"},
-        {"role": "assistant", "content": EventExtraction(
-            description="List meetings for today",
-            is_calendar_event=False,
-            is_calendar_modify_event=False,
-            is_list_events=True,
-            confidence_score=0.92
-        ).model_dump_json()},
-        {"role": "user", "content": user_input}
+        }
     ]
 
     try:
