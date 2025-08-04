@@ -12,4 +12,6 @@ model = "gpt-4o"
 client_llama = Client(host='http://192.168.50.214:11435')
 model_llama = 'llama3.1:8b'
 
-model_fine_tuned = "ft:gpt-4.1-mini-2025-04-14:personal:list-calendar-model:By8kn4z8"
+model_list_event = "ft:gpt-4.1-mini-2025-04-14:personal:list-calendar-model:By8kn4z8"
+
+model_calendar = "ft:gpt-4.1-mini-2025-04-14:personal:is-calendar-event-model:C0isXu9v"
