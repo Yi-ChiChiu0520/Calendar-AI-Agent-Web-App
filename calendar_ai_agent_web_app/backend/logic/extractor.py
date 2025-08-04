@@ -33,12 +33,13 @@ def extract_event_info(user_input: str) -> EventExtraction:
 
     try:
         response = client.beta.chat.completions.parse(
-            model=model_calendar,
+            model="ft:gpt-4.1-mini-2025-04-14:personal:is-calendar-event-model:C0isXu9v",
             messages=messages,
             response_format=EventExtraction
         )
 
-        logger.info(f"Using model: {model_calendar}")
+        logger.info(f"Using model: ft:gpt-4.1-mini-2025-04-14:personal:is-calendar-event-model:C0isXu9v")
+
         parsed = response.choices[0].message.parsed
 
         desc = parsed.description.strip()
