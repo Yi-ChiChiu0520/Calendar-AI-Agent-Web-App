@@ -12,27 +12,18 @@ def extract_event_info(user_input: str) -> EventExtraction:
     messages = [
         {
             "role": "system",
-            "content": f"""
-{date_context}
+            "content": f"""{date_context}
 
-You are an assistant that classifies calendar-related user messages. 
+    You are a calendar assistant. Your task is to classify the user's message and return only structured JSON with the following fields:
 
-DO NOT: rephrase as "guide user on..." or "guide to..." — treat all user inputs as direct commands or requests
+    - description: Cleaned-up summary of intent (str)
+    - is_calendar_event: bool
+    - is_calendar_modify_event: bool
+    - is_list_events: bool
+    - confidence_score: float (0.0 to 1.0)
 
-Your task is to classify whether the user is directly trying to schedule, modify, or list a calendar event. Do not rephrase as "guide user to..." — treat all user inputs as direct commands or requests. Respond only with structured JSON.
-1. Creating a new calendar event (e.g. "Schedule meeting with Alice").
-2. Modifying an existing calendar event (e.g. "Move call with Bob to 4pm").
-3. Listing calendar events (e.g. "What meetings do I have tomorrow?", "Show my calls with Ethan", "Tell me all meetings I have tomorrow.").
-
-Return a JSON object with:
-- description: Cleaned-up short summary of intent WITHOUT rephrasing as "guide user on..." or "guide to..." (str)
-- is_calendar_event: bool
-- is_calendar_modify_event: bool
-- is_list_events: bool
-- confidence_score: float (0.0 to 1.0)
-
-Only output JSON. Do not explain.
-            """
+    Respond with JSON only. Do not explain.
+    """
         }
     ]
 
