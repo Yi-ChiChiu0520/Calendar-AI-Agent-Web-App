@@ -12,10 +12,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://calendar-ai-agent-web-k5vm7gvux-ethan-chius-projects-a1e59d9f.vercel.app",
-        "https://calendar-agent-app.com",  # if frontend hosted here too
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -24,6 +21,10 @@ app.add_middleware(
 class CalendarRequest(BaseModel):
     user_input: str
     participants: Optional[List[str]] = []
+
+@app.get("/")
+def health_check():
+    return {"status": "ok"}
 
 @app.post("/process")
 def process_event(request: CalendarRequest):
