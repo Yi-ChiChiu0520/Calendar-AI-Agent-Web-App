@@ -11,7 +11,6 @@ An AI-powered scheduling assistant that extracts events from natural language, v
 - 📧 **Notification System** – Sends SMS and email alerts to participants.
 - 📆 **Google Calendar Integration** – Automatically schedules valid events to Google Calendar.
 - 🧪 **Form & Input Validation** – Checks badge numbers, article codes, license plates, and more.
-- 🔁 **Return to Menu Option** – Enables multiple entries in one session.
 
 ---
 
